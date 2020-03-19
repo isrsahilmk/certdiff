@@ -5,7 +5,9 @@ use clap::{Arg, App};
 
 use std::env;
 use std::fs;
- 
+use std::fs::File;
+use std::io::Write;
+use std::{thread, time};
 
 fn main() {
 
@@ -30,7 +32,7 @@ fn main() {
 		    Err(_) => ()
 	    }
 	 },
-	 None => println!("No home dir")
+	 None => eprintln!("No home dir")
     }
 
 
@@ -42,7 +44,7 @@ fn main() {
                 Err(_) => ()
             }
         },
-        None => println!("Target arg not passed, see help using --help")
+        None => eprintln!("[+] Target arg not passed, see help using --help [+]")
     }
 }
 
@@ -55,30 +57,65 @@ fn http_client(target: &str) -> Result<(), Box<dyn std::error::Error>> {
 
     // json parsing
     let parsed_json = json::parse(&response).unwrap();
-   
-    create_target_dir(&target, parsed_json);
 
+    if parsed_json.is_array() {
+        save_subs(&target, parsed_json);
+    } else {
+        eprintln!("[*] It seems that you have been rate limited on cert spotter api, try again later [*]");
+    }
+    
     return Ok(());
 }
 
-fn create_target_dir(target: &str, parsed_json: json::JsonValue) {
+fn save_subs(target: &str, parsed_json: json::JsonValue) {
 
     match env::home_dir() {
         Some(home_path) => {
             match fs::create_dir(home_path.join(".certdiff").join(target)) {
                 Ok(_) => {
-                    println!("Directory created for {}, at {} \n", target, home_path.join(".certdiff").join("target").display());
+                    println!("Directory created for {} at {} \n", target, home_path.join(".certdiff").join(target).display());
+                    thread::sleep(time::Duration::from_secs(3));
+
+                    let mut savefile = File::create(home_path.join(".certdiff").join(target).join("savefile"))
+                        .expect("Unable to create the subdomains savefile");
+
                     for data in parsed_json.members() {
-                        for domain in data["dns_names"].members() {
-                            println!("{}", domain);
+                        for sub in data["dns_names"].members() {
+                            writeln!(savefile, "{}", sub)
+                                .expect("Unable to write to the savefile");
+                            println!("{}", sub);
                         }
                     }
+                    thread::sleep(time::Duration::from_secs(3));
+                    println!(
+                        "\n[*] The subdomains has been saved into {}. Run another scan maybe after a week to check if they have new subdomains added, or removed. [*]"
+                            , home_path.join(".certdiff").join(target).join("savefile").display()
+                        );
                 },
+
                 Err(_) => {
-                    // check if first file exists -> target(1), and create one more for diffing -> target(2)
+                    // Err(_) means the savefile exists, now create one more for diffing -> tempfile
+                    println!("[+] Directory for {} already exists [+]\n", target);
+                    thread::sleep(time::Duration::from_secs(3));
+                    let home_path = Some(env::home_dir().unwrap()).unwrap();
+                    let mut tempfile = File::create(home_path.join(".certdiff").join(target).join("tempfile"))
+                       .expect("Unable to create the subdomains savefile");
+
+                    for data in parsed_json.members() {
+                        for sub in data["dns_names"].members() {
+                            writeln!(tempfile, "{}", sub)
+                                .expect("Unable to write to the savefile");
+                            println!("{}", sub);
+                        }
+                    }
+                    thread::sleep(time::Duration::from_secs(3));
+                    println!(
+                        "\nNow diffing these subdomains with the previous scan to check for new subdomains or removed subdomains"
+                    );
+                    thread::sleep(time::Duration::from_secs(3));
                 }
             }
         },
-        None => println!("No home dir")
+        None => eprintln!("No home dir")
     }
 }
