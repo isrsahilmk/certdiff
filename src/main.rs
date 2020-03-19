@@ -1,7 +1,9 @@
 extern crate clap;
 extern crate json;
+extern crate colored;
 
 use clap::{Arg, App};
+use colored::*;
 
 use std::env;
 use std::fs;
@@ -15,7 +17,7 @@ fn main() {
     let arg_matches = App::new("certdiff")
         .version("0.0.1")
         .author("Sahil Tembhare @isrsahilmk")
-        .about("sslmate cert diffing tool for continuous subdomain reconnaissance, single use as well. (This tool will save all the data into ~/.certdiff directory")
+        .about("Cert diffing tool for continuous subdomain reconnaissance. (This tool will save all the data into ~/.certdiff directory)")
         .arg(Arg::with_name("target")
             .short("t")
             .long("target")
@@ -32,7 +34,7 @@ fn main() {
 		    Err(_) => ()
 	    }
 	 },
-	 None => eprintln!("No home dir")
+	 None => eprintln!("{}", "[+] No home dir [+]".red())
     }
 
 
@@ -44,7 +46,7 @@ fn main() {
                 Err(_) => ()
             }
         },
-        None => eprintln!("[+] Target arg not passed, see help using --help [+]")
+        None => eprintln!("{}", "[+] Target arg not passed, see help using --help [+]".red())
     }
 }
 
@@ -61,7 +63,7 @@ fn http_client(target: &str) -> Result<(), Box<dyn std::error::Error>> {
     if parsed_json.is_array() {
         save_subs(&target, parsed_json);
     } else {
-        eprintln!("[*] It seems that you have been rate limited on cert spotter api, try again later [*]");
+        eprintln!("{}", "[+] It seems that you have been rate limited on cert spotter api, try again later [+]".red().bold());
     }
     
     return Ok(());
@@ -73,7 +75,7 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
         Some(home_path) => {
             match fs::create_dir(home_path.join(".certdiff").join(target)) {
                 Ok(_) => {
-                    println!("Directory created for {} at {} \n", target, home_path.join(".certdiff").join(target).display());
+                    println!("{}", format!("Directory created for {} at {} \n", target, home_path.join(".certdiff").join(target).display()).yellow());
                     thread::sleep(time::Duration::from_secs(3));
 
                     let mut savefile = File::create(home_path.join(".certdiff").join(target).join("savefile"))
@@ -88,14 +90,15 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
                     }
                     thread::sleep(time::Duration::from_secs(3));
                     println!(
-                        "\n[*] The subdomains has been saved into {}. Run another scan maybe after a week to check if they have new subdomains added, or removed. [*]"
-                            , home_path.join(".certdiff").join(target).join("savefile").display()
+                        "{}", format!("\n[+] The subdomains has been saved into {} [+]\n[+] Run another scan maybe after a week to check if they have new subdomains added, or removed. [+]"
+                            , home_path.join(".certdiff").join(target).join("savefile").display()).green()
                         );
                 },
 
                 Err(_) => {
+                    
                     // Err(_) means the savefile exists, now create one more for diffing -> tempfile
-                    println!("[+] Directory for {} already exists [+]\n", target);
+                    println!("{}", format!("[+] Directory for {} already exists [+]\n", target).yellow());
                     thread::sleep(time::Duration::from_secs(3));
                     let home_path = Some(env::home_dir().unwrap()).unwrap();
                     let mut tempfile = File::create(home_path.join(".certdiff").join(target).join("tempfile"))
@@ -108,14 +111,15 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
                             println!("{}", sub);
                         }
                     }
+
                     thread::sleep(time::Duration::from_secs(3));
                     println!(
-                        "\nNow diffing these subdomains with the previous scan to check for new subdomains or removed subdomains"
+                        "{}", format!("\n[+] Diffing these subdomains with the previous scan to check for new subdomains or removed subdomains [+]").blue().bold()
                     );
-                    thread::sleep(time::Duration::from_secs(3));
+                    thread::sleep(time::Duration::from_secs(2));
                 }
             }
         },
-        None => eprintln!("No home dir")
+        None => eprintln!("{}", "[+] No home dir [+]".red())
     }
 }
