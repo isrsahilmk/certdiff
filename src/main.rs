@@ -29,7 +29,7 @@ fn main() {
             .takes_value(true)).get_matches();
 
       
-    // checking if ~/.facediff dir exists, if not, create one
+    // checking if ~/.certdiff dir exists, if not, create one
     match env::home_dir() {
    	 Some(home_path) => {
 	    match fs::create_dir(home_path.join(".certdiff")) {
