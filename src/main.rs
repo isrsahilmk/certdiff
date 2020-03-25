@@ -93,7 +93,7 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
                     thread::sleep(time::Duration::from_secs(3));
                     println!(
                         "{}", format!("\n[+] The subdomains has been saved into {} [+]\n[+] Run another scan maybe after a week to check if they have new subdomains added, or removed. [+]"
-                            , home_path.join(".certdiff").join(target).join("savefile").display()).green()
+                            , home_path.join(".certdiff").join(target).join("savefile").display()).blue()
                         );
                 },
 
@@ -132,6 +132,8 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
 fn diff_subs(savefile: path::PathBuf, tempfile: path::PathBuf) {
     let mut sf_vec = Vec::new();
     let mut tf_vec = Vec::new();
+    let mut new_vec = Vec::new();
+    let mut rem_vec = Vec::new();
 
     let sf = BufReader::new(File::open(savefile).unwrap());
     let tf = BufReader::new(File::open(tempfile).unwrap());
@@ -144,6 +146,22 @@ fn diff_subs(savefile: path::PathBuf, tempfile: path::PathBuf) {
     for line in tf.lines() {
         &tf_vec.push(line.unwrap());
     }
-    
 
+    // removing duplicate subdomain entry
+    sf_vec.dedup();
+    tf_vec.dedup();
+    
+    // check new subdonains
+    for t_sd in &tf_vec {
+        if !sf_vec.contains(&t_sd) {
+            new_vec.push(t_sd);
+        }
+    }
+
+    // check removed subdomains 
+    for s_sd in &sf_vec {
+        if !tf_vec.contains(&s_sd) {
+            rem_vec.push(s_sd)
+        }
+    }
 }
