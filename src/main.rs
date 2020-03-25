@@ -119,9 +119,7 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
                         "{}", format!("\n[+] Diffing these subdomains with the previous scan to check for new subdomains or removed subdomains [+]\n").blue().bold()
                     );
                     thread::sleep(time::Duration::from_secs(2));
-                    let sf = env::home_dir().unwrap().join(".certdiff").join(target).join("savefile");
-                    let tf = env::home_dir().unwrap().join(".certdiff").join(target).join("tempfile");
-                    diff_subs(sf, tf);
+                    diff_subs(&target);
                 }
             }
         },
@@ -129,21 +127,25 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
     }
 }
 
-fn diff_subs(savefile: path::PathBuf, tempfile: path::PathBuf) {
+fn diff_subs(target: &str) {
+
+    let sf_file = env::home_dir().unwrap().join(".certdiff").join(&target).join("savefile");
+    let tf_file = env::home_dir().unwrap().join(".certdiff").join(&target).join("tempfile");
+
     let mut sf_vec = Vec::new();
     let mut tf_vec = Vec::new();
     let mut new_vec = Vec::new();
     let mut rem_vec = Vec::new();
 
-    let sf = BufReader::new(File::open(savefile).unwrap());
-    let tf = BufReader::new(File::open(tempfile).unwrap());
+    let sf_buf = BufReader::new(File::open(&sf_file).unwrap());
+    let tf_buf = BufReader::new(File::open(&tf_file).unwrap());
     
     // saving sf and tf subdomains into vectors
-    for line in sf.lines() {
+    for line in sf_buf.lines() {
         &sf_vec.push(line.unwrap());
     }
 
-    for line in tf.lines() {
+    for line in tf_buf.lines() {
         &tf_vec.push(line.unwrap());
     }
 
@@ -164,4 +166,33 @@ fn diff_subs(savefile: path::PathBuf, tempfile: path::PathBuf) {
             rem_vec.push(s_sd)
         }
     }
+
+    // print new subdomains, if there are any
+    if new_vec.len() > 0 {
+        println!("{}", format!("These new subdomains has been found - ").green());
+        
+        for (i, n_sub) in new_vec.iter().enumerate() {
+            println!("{} -- {}", i+1, n_sub);
+        }
+    } else {
+        println!("{}", format!("No new subdomains found!").bold());
+    }
+
+    // print removed subdomains, if there are any
+    if rem_vec.len() > 0 {
+        println!("{}", format!("These new subdomains seems to be removed - ").red());
+
+        for (i, r_sub) in rem_vec.iter().enumerate() {
+            println!("{} -- {}", i+1, r_sub);
+        }
+    } else {
+        println!("{}", format!("No removed subdomains found!").bold());
+    }
+
+    // remove the existing savefile
+    fs::remove_file(sf_file).unwrap();
+
+    // rename tempfile to savefile
+    fs::rename(tf_file, env::home_dir().unwrap().join(".certdiff").join(&target).join("savefile")).unwrap();
+
 }
