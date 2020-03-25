@@ -130,19 +130,19 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
 }
 
 fn diff_subs(savefile: path::PathBuf, tempfile: path::PathBuf) {
-    let sf_vec = Vec::new();
-    let tf_vec = Vec::new();
+    let mut sf_vec = Vec::new();
+    let mut tf_vec = Vec::new();
 
     let sf = BufReader::new(File::open(savefile).unwrap());
     let tf = BufReader::new(File::open(tempfile).unwrap());
     
     // saving sf and tf subdomains into vectors
     for line in sf.lines() {
-        sf_vec.push(line.unwrap());
+        &sf_vec.push(line.unwrap());
     }
 
     for line in tf.lines() {
-        tf_vec.push(line.unwrap());
+        &tf_vec.push(line.unwrap());
     }
     
 
