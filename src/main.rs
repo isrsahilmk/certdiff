@@ -10,6 +10,9 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::{thread, time};
+use std::path;
+use std::io::BufReader;
+use std::io::prelude::*;
 
 fn main() {
 
@@ -31,7 +34,7 @@ fn main() {
    	 Some(home_path) => {
 	    match fs::create_dir(home_path.join(".certdiff")) {
 	        Ok(_) => (),
-		    Err(_) => ()
+	        Err(_) => ()
 	    }
 	 },
 	 None => eprintln!("{}", "[+] No home dir [+]".red())
@@ -49,7 +52,6 @@ fn main() {
         None => eprintln!("{}", "[+] Target arg not passed, see help using --help [+]".red())
     }
 }
-
 
 
 fn http_client(target: &str) -> Result<(), Box<dyn std::error::Error>> {
@@ -114,12 +116,34 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
 
                     thread::sleep(time::Duration::from_secs(3));
                     println!(
-                        "{}", format!("\n[+] Diffing these subdomains with the previous scan to check for new subdomains or removed subdomains [+]").blue().bold()
+                        "{}", format!("\n[+] Diffing these subdomains with the previous scan to check for new subdomains or removed subdomains [+]\n").blue().bold()
                     );
                     thread::sleep(time::Duration::from_secs(2));
+                    let sf = env::home_dir().unwrap().join(".certdiff").join(target).join("savefile");
+                    let tf = env::home_dir().unwrap().join(".certdiff").join(target).join("tempfile");
+                    diff_subs(sf, tf);
                 }
             }
         },
         None => eprintln!("{}", "[+] No home dir [+]".red())
     }
+}
+
+fn diff_subs(savefile: path::PathBuf, tempfile: path::PathBuf) {
+    let sf_vec = Vec::new();
+    let tf_vec = Vec::new();
+
+    let sf = BufReader::new(File::open(savefile).unwrap());
+    let tf = BufReader::new(File::open(tempfile).unwrap());
+    
+    // saving sf and tf subdomains into vectors
+    for line in sf.lines() {
+        sf_vec.push(line.unwrap());
+    }
+
+    for line in tf.lines() {
+        tf_vec.push(line.unwrap());
+    }
+    
+
 }
