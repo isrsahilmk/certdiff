@@ -10,7 +10,6 @@ use std::fs;
 use std::fs::File;
 use std::io::Write;
 use std::{thread, time};
-use std::path;
 use std::io::BufReader;
 use std::io::prelude::*;
 
