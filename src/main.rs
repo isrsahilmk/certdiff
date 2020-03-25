@@ -116,7 +116,7 @@ fn save_subs(target: &str, parsed_json: json::JsonValue) {
 
                     thread::sleep(time::Duration::from_secs(3));
                     println!(
-                        "{}", format!("\n[+] Diffing these subdomains with the previous scan to check for new subdomains or removed subdomains [+]\n").blue().bold()
+                        "{}", "\n[+] Diffing these subdomains with the previous scan to check for new subdomains or removed subdomains [+]\n".blue().bold()
                     );
                     thread::sleep(time::Duration::from_secs(2));
                     diff_subs(&target);
@@ -169,24 +169,24 @@ fn diff_subs(target: &str) {
 
     // print new subdomains, if there are any
     if new_vec.len() > 0 {
-        println!("{}", format!("These new subdomains has been found - ").green());
+        println!("{}", "These new subdomains has been found - ".green());
         
         for (i, n_sub) in new_vec.iter().enumerate() {
             println!("{} -- {}", i+1, n_sub);
         }
     } else {
-        println!("{}", format!("No new subdomains found!").bold());
+        println!("{}", "No new subdomains found!".bold());
     }
 
     // print removed subdomains, if there are any
     if rem_vec.len() > 0 {
-        println!("{}", format!("These new subdomains seems to be removed - ").red());
+        println!("{}", "These new subdomains seems to be removed - ".red());
 
         for (i, r_sub) in rem_vec.iter().enumerate() {
             println!("{} -- {}", i+1, r_sub);
         }
     } else {
-        println!("{}", format!("No removed subdomains found!").bold());
+        println!("{}", "No removed subdomains found!".bold());
     }
 
     // remove the existing savefile
