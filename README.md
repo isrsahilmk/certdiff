@@ -20,3 +20,5 @@ A directory will be created at ~/.certdiff and all of your targets data will be 
 
 * Save new subdomains logs in a file (along with a timestamp)
 * Save removed subdomains logs in a file (along with a timestamp)
+* Proper error handling
+* Make it much more optimized
